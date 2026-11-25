@@ -2,22 +2,16 @@
 
 namespace HomeClimate.Tests;
 
-public class HealthTests
+[Collection(AppHostCollection.Name)]
+public class HealthTests(AppHostFixture fixture)
 {
     [Fact]
     public async Task Health_reports_db_and_broker_healthy()
     {
-        using var cts = new CancellationTokenSource(TimeSpan.FromMinutes(3));
-        var appHost = await DistributedApplicationTestingBuilder
-            .CreateAsync<Projects.HomeClimate_AppHost>(cts.Token);
-        await using var app = await appHost.BuildAsync(cts.Token);
-        await app.StartAsync(cts.Token);
-        await app.ResourceNotifications.WaitForResourceHealthyAsync("api", cts.Token);
-
-        var response = await app.CreateHttpClient("api").GetAsync("/api/health", cts.Token);
+        var response = await fixture.App.CreateHttpClient("api").GetAsync("/api/health");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var health = await response.Content.ReadFromJsonAsync<HealthResponse>(cts.Token);
+        var health = await response.Content.ReadFromJsonAsync<HealthResponse>();
         Assert.Equal(
             new Dictionary<string, string> { ["db"] = "Healthy", ["broker"] = "Healthy" },
             health!.Checks);

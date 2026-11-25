@@ -13,7 +13,10 @@ public class BrokerHealthCheck(MqttSettings settings) : IHealthCheck
             .WithCredentials(settings.Username, settings.Password)
             .Build();
         using var client = new MqttClientFactory().CreateMqttClient();
-        await client.ConnectAsync(options, cancellationToken);
+        var result = await client.ConnectAsync(options, cancellationToken);
+        if (result.ResultCode != MqttClientConnectResultCode.Success)
+            return HealthCheckResult.Unhealthy($"Broker refused connect: {result.ResultCode}");
+
         await client.DisconnectAsync(cancellationToken: cancellationToken);
         return HealthCheckResult.Healthy();
     }
