@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/HomeClimate.Api/HomeClimate.Api.csproj" />
+    <Project Path="src/HomeClimate.AppHost/HomeClimate.AppHost.csproj" />
+    <Project Path="src/HomeClimate.ServiceDefaults/HomeClimate.ServiceDefaults.csproj" />
+    <Project Path="src/HomeClimate.Simulator/HomeClimate.Simulator.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/HomeClimate.Tests/HomeClimate.Tests.csproj" />
+  </Folder>
+</Solution>
