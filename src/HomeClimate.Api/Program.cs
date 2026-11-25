@@ -6,7 +6,11 @@ builder.AddServiceDefaults();
 
 // Aspire's built-in check is named "PostgreSql"; ours reports as "db"
 builder.AddNpgsqlDataSource("climate", settings => settings.DisableHealthChecks = true);
-builder.Services.AddHealthChecks().AddCheck<DbHealthCheck>("db", tags: ["api"]);
+// Binding to a record throws at startup if any Mqtt key is missing
+builder.Services.AddSingleton(builder.Configuration.GetRequiredSection("Mqtt").Get<MqttSettings>()!);
+builder.Services.AddHealthChecks()
+    .AddCheck<DbHealthCheck>("db", tags: ["api"])
+    .AddCheck<BrokerHealthCheck>("broker", tags: ["api"]);
 
 var app = builder.Build();
 app.MapDefaultEndpoints();

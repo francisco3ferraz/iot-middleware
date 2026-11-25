@@ -1,0 +1,5 @@
+user sensor
+topic write home/sensors/#
+
+user middleware
+topic read home/sensors/#
