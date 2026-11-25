@@ -10,4 +10,8 @@
     <ProjectReference Include="..\HomeClimate.ServiceDefaults\HomeClimate.ServiceDefaults.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Aspire.Npgsql" Version="17.0.0" />
+  </ItemGroup>
+
 </Project>
