@@ -1,24 +1,38 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { App } from './app';
 
 describe('App', () => {
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [App],
-    })
-      .compileComponents();
+  let http: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    });
+    http = TestBed.inject(HttpTestingController);
   });
 
-  it('should create the app', () => {
+  async function renderWith(respond: (request: ReturnType<HttpTestingController['expectOne']>) => void) {
     const fixture = TestBed.createComponent(App);
-    const app = fixture.componentInstance;
-    expect(app).toBeTruthy();
-  });
-
-  it('should render title', async () => {
-    const fixture = TestBed.createComponent(App);
+    TestBed.tick(); // whenStable would wait on the pending request forever
+    respond(http.expectOne('/api/health'));
     await fixture.whenStable();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, web');
+    return (fixture.nativeElement as HTMLElement).textContent?.trim();
+  }
+
+  it('shows API, DB and broker ok when every check is healthy', async () => {
+    const text = await renderWith(r => r.flush({ checks: { db: 'Healthy', broker: 'Healthy' } }));
+    expect(text).toBe('API ok, DB ok, broker ok');
+  });
+
+  it('shows a failing check as down', async () => {
+    const text = await renderWith(r => r.flush({ checks: { db: 'Unhealthy', broker: 'Healthy' } }));
+    expect(text).toBe('API ok, DB down, broker ok');
+  });
+
+  it('shows API down when the request fails', async () => {
+    const text = await renderWith(r => r.flush('', { status: 502, statusText: 'Bad Gateway' }));
+    expect(text).toBe('API down');
   });
 });
