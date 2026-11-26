@@ -1,4 +1,5 @@
 ﻿using MQTTnet;
+using MQTTnet.Protocol;
 
 namespace HomeClimate.Tests;
 
@@ -31,6 +32,27 @@ public class BrokerTests(AppHostFixture fixture)
         await sensor.PublishStringAsync("home/sensors/test/meta", "hello");
 
         Assert.Equal("hello", await received.Task.WaitAsync(TimeSpan.FromSeconds(10)));
+    }
+
+    [Fact]
+    public async Task Middleware_cannot_publish_on_sensor_topics()
+    {
+        using var middleware = await ConnectAsync("middleware", "mqtt-middleware-password");
+        var received = new TaskCompletionSource<string>();
+        middleware.ApplicationMessageReceivedAsync += e =>
+        {
+            received.TrySetResult(e.ApplicationMessage.ConvertPayloadToString());
+            return Task.CompletedTask;
+        };
+        await middleware.SubscribeAsync("home/sensors/#");
+        using var sensor = await ConnectAsync("sensor", "mqtt-sensor-password");
+
+        // QoS 1 waits for the broker to handle each publish, so the sensor's
+        // message can only arrive first if the middleware's was dropped
+        await middleware.PublishStringAsync("home/sensors/acl/meta", "from middleware", MqttQualityOfServiceLevel.AtLeastOnce);
+        await sensor.PublishStringAsync("home/sensors/acl/meta", "from sensor", MqttQualityOfServiceLevel.AtLeastOnce);
+
+        Assert.Equal("from sensor", await received.Task.WaitAsync(TimeSpan.FromSeconds(10)));
     }
 
     private MqttClientOptionsBuilder BrokerOptions()

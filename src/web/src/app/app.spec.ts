@@ -13,7 +13,9 @@ describe('App', () => {
     http = TestBed.inject(HttpTestingController);
   });
 
-  async function renderWith(respond: (request: ReturnType<HttpTestingController['expectOne']>) => void) {
+  async function renderWith(
+    respond: (request: ReturnType<HttpTestingController['expectOne']>) => void,
+  ) {
     const fixture = TestBed.createComponent(App);
     TestBed.tick(); // whenStable would wait on the pending request forever
     respond(http.expectOne('/api/health'));
@@ -22,17 +24,25 @@ describe('App', () => {
   }
 
   it('shows API, DB and broker ok when every check is healthy', async () => {
-    const text = await renderWith(r => r.flush({ checks: { db: 'Healthy', broker: 'Healthy' } }));
+    const text = await renderWith((r) => r.flush({ checks: { db: 'Healthy', broker: 'Healthy' } }));
     expect(text).toBe('API ok, DB ok, broker ok');
   });
 
   it('shows a failing check as down', async () => {
-    const text = await renderWith(r => r.flush({ checks: { db: 'Unhealthy', broker: 'Healthy' } }));
+    const text = await renderWith((r) =>
+      r.flush({ checks: { db: 'Unhealthy', broker: 'Healthy' } }),
+    );
     expect(text).toBe('API ok, DB down, broker ok');
   });
 
   it('shows API down when the request fails', async () => {
-    const text = await renderWith(r => r.flush('', { status: 502, statusText: 'Bad Gateway' }));
+    const text = await renderWith((r) => r.flush('', { status: 502, statusText: 'Bad Gateway' }));
     expect(text).toBe('API down');
+  });
+
+  it('fails loudly when the response lacks a check', async () => {
+    await expect(renderWith((r) => r.flush({ checks: { db: 'Healthy' } }))).rejects.toThrow(
+      'Health response has no broker check',
+    );
   });
 });

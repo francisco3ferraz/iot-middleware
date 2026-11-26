@@ -5,10 +5,9 @@ var db = builder.AddPostgres("timescale")
     .AddDatabase("climate");
 
 // Generated once, then kept in the AppHost's user secrets
-var sensorPassword = builder.AddParameter("mqtt-sensor-password",
-    new GenerateParameterDefault { MinLength = 22, Special = false }, secret: true, persist: true);
-var middlewarePassword = builder.AddParameter("mqtt-middleware-password",
-    new GenerateParameterDefault { MinLength = 22, Special = false }, secret: true, persist: true);
+var mqttPasswordDefault = new GenerateParameterDefault { MinLength = 22, Special = false };
+var sensorPassword = builder.AddParameter("mqtt-sensor-password", mqttPasswordDefault, secret: true, persist: true);
+var middlewarePassword = builder.AddParameter("mqtt-middleware-password", mqttPasswordDefault, secret: true, persist: true);
 
 var mosquitto = builder.AddContainer("mosquitto", "eclipse-mosquitto", "2.1.4-alpine")
     .WithEndpoint(targetPort: 1883, name: "mqtt", scheme: "tcp")
@@ -29,10 +28,10 @@ var api = builder.AddDotnetProject("api", "../HomeClimate.Api/HomeClimate.Api.cs
     .WithEnvironment("Mqtt__Password", middlewarePassword)
     .WaitFor(mosquitto);
 
+// No WaitFor(api): its health needs DB and broker, and the page must load to show them down
 builder.AddJavaScriptApp("web", "../web", "start")
     .WithHttpEndpoint(targetPort: 4200)
-    .WithReference(api)
-    .WaitFor(api);
+    .WithReference(api);
 
 builder.AddDotnetProject("simulator", "../HomeClimate.Simulator/HomeClimate.Simulator.csproj");
 

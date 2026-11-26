@@ -4,7 +4,6 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>dotnet-HomeClimate.Simulator-f2e03955-b152-49e5-8b51-ce343ec22e0c</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
