@@ -19,7 +19,7 @@ var mosquitto = builder.AddContainer("mosquitto", "eclipse-mosquitto", "2.1.4-al
     .WithEnvironment("MQTT_MIDDLEWARE_PASSWORD", middlewarePassword);
 var mqtt = mosquitto.GetEndpoint("mqtt");
 
-builder.AddDotnetProject("api", "../HomeClimate.Api/HomeClimate.Api.csproj")
+var api = builder.AddDotnetProject("api", "../HomeClimate.Api/HomeClimate.Api.csproj")
     .WithHttpHealthCheck("/health")
     .WithReference(db)
     .WaitFor(db)
@@ -28,6 +28,11 @@ builder.AddDotnetProject("api", "../HomeClimate.Api/HomeClimate.Api.csproj")
     .WithEnvironment("Mqtt__Username", "middleware")
     .WithEnvironment("Mqtt__Password", middlewarePassword)
     .WaitFor(mosquitto);
+
+builder.AddJavaScriptApp("web", "../web", "start")
+    .WithHttpEndpoint(targetPort: 4200)
+    .WithReference(api)
+    .WaitFor(api);
 
 builder.AddDotnetProject("simulator", "../HomeClimate.Simulator/HomeClimate.Simulator.csproj");
 
