@@ -1,0 +1,63 @@
+<form
+  [formRoot]="loginForm"
+  [class.invalid]="error()"
+  [class.shake]="shaking()"
+  (animationend)="shaking.set(false)"
+>
+  <hgroup>
+    <h1>Monitor de clima</h1>
+    <p>Painel de administração</p>
+  </hgroup>
+
+  <div class="fields">
+    <div class="field">
+      <input
+        id="username"
+        [formField]="loginForm.username"
+        autocomplete="username"
+        placeholder=" "
+      />
+      <label for="username">Utilizador</label>
+    </div>
+
+    <div class="field">
+      <input
+        id="password"
+        [formField]="loginForm.password"
+        [type]="passwordShown() ? 'text' : 'password'"
+        autocomplete="current-password"
+        placeholder=" "
+        (keydown)="capsLock.set($event.getModifierState('CapsLock'))"
+        (keyup)="capsLock.set($event.getModifierState('CapsLock'))"
+        (blur)="capsLock.set(false)"
+      />
+      <label for="password">Palavra-passe</label>
+      <button
+        type="button"
+        class="toggle"
+        [class.shown]="passwordShown()"
+        [attr.aria-label]="passwordShown() ? 'Esconder palavra-passe' : 'Mostrar palavra-passe'"
+        (click)="passwordShown.set(!passwordShown())"
+      >
+        <svg class="eye" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" />
+          <circle cx="12" cy="12" r="3" />
+        </svg>
+        <svg class="eye-off" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M10.6 5.1A9.8 9.8 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-2.2 3.1M6.6 6.6C3.7 8.4 2 12 2 12s3.6 7 10 7a9.6 9.6 0 0 0 5.4-1.6"
+          />
+          <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+          <path d="M3 3l18 18" />
+        </svg>
+      </button>
+      <span class="caps" [class.on]="capsLock()">Caps Lock ativo</span>
+    </div>
+
+    <div class="error-wrap" aria-live="polite">
+      <p>{{ error() }}</p>
+    </div>
+  </div>
+
+  <button class="submit" [class.loading]="loginForm().submitting()"><span>Entrar</span></button>
+</form>

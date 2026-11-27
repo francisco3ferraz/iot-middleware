@@ -1,0 +1,278 @@
+/*
+  States the logic switches on with class bindings:
+  form.invalid   red lines and the error text open
+  form.shake     fields shake once, remove it on (animationend)
+  .submit.loading  spinner instead of the label
+  .toggle.shown  eye-off icon, password visible
+  .caps.on       Caps Lock hint visible
+*/
+:host {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}
+
+form {
+  width: 320px;
+  display: grid;
+  gap: 30px;
+}
+
+/* Each block rises in, one after another */
+form > * {
+  animation: rise 0.7s var(--ease) both;
+}
+.fields {
+  animation-delay: 0.1s;
+}
+.submit {
+  animation-delay: 0.2s;
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+hgroup h1 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+}
+hgroup p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.fields {
+  display: grid;
+}
+.field + .field {
+  margin-top: 30px;
+}
+
+/* Floating label: sits in the input, glides up on focus or when filled */
+.field {
+  position: relative;
+  padding-top: 14px;
+}
+.field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 0;
+  font: inherit;
+  color: var(--ink);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  outline: 0;
+  transition: border-color 0.4s var(--ease);
+}
+#password {
+  padding-right: 32px;
+}
+.field label {
+  position: absolute;
+  left: 0;
+  top: 22px;
+  color: var(--muted);
+  pointer-events: none;
+  transform-origin: left;
+  transition:
+    transform 0.4s var(--ease),
+    color 0.4s var(--ease);
+}
+.field input:focus + label,
+.field input:not(:placeholder-shown) + label {
+  transform: translateY(-22px) scale(0.78);
+}
+.field input:focus + label {
+  color: var(--accent);
+}
+/* Underline grows from the centre on focus */
+.field::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transition: transform 0.5s var(--ease);
+}
+.field:focus-within::after {
+  transform: scaleX(1);
+}
+
+.toggle {
+  position: absolute;
+  right: -4px;
+  bottom: 4px;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    color 0.3s var(--ease),
+    background 0.3s var(--ease);
+}
+.toggle:hover {
+  color: var(--ink);
+  background: rgb(0 0 0 / 0.04);
+}
+/* Eye and eye-off sit on top of each other and cross-fade */
+.toggle svg {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition:
+    opacity 0.3s var(--ease),
+    transform 0.3s var(--ease);
+}
+.toggle .eye-off,
+.toggle.shown .eye {
+  opacity: 0;
+  transform: scale(0.8);
+}
+.toggle.shown .eye-off {
+  opacity: 1;
+  transform: none;
+}
+
+.caps {
+  position: absolute;
+  left: 0;
+  bottom: -20px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 0.3s var(--ease),
+    transform 0.3s var(--ease);
+}
+.caps.on {
+  opacity: 1;
+  transform: none;
+}
+
+/* Error opens smoothly right under the password line */
+.error-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.45s var(--ease);
+}
+/* Closed, the padding overflows the 0fr row, so it takes no space */
+.error-wrap > p {
+  overflow: hidden;
+  margin: 0;
+  padding-top: 6px;
+  color: var(--bad);
+  font-size: 0.8rem;
+  opacity: 0;
+  transition: opacity 0.45s var(--ease);
+}
+form.invalid .error-wrap {
+  grid-template-rows: 1fr;
+}
+form.invalid .error-wrap > p {
+  opacity: 1;
+}
+form.invalid .caps {
+  opacity: 0;
+}
+form.invalid .field input {
+  border-bottom-color: var(--bad);
+}
+form.invalid .field::after {
+  background: var(--bad);
+}
+
+/* Shakes .field, not .fields, so it never replaces the rise animation */
+form.shake .field {
+  animation: shake 0.5s var(--ease);
+}
+@keyframes shake {
+  20% {
+    transform: translateX(-8px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+.submit {
+  position: relative;
+  height: 46px;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  transition:
+    background 0.35s var(--ease),
+    color 0.35s var(--ease),
+    scale 0.2s var(--ease);
+}
+.submit:hover {
+  background: transparent;
+  color: var(--accent);
+}
+.submit:active {
+  scale: 0.98;
+}
+.submit span {
+  transition: opacity 0.3s var(--ease);
+}
+.submit.loading {
+  cursor: default;
+}
+.submit.loading span {
+  opacity: 0;
+}
+.submit::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  opacity: 0;
+  animation: spin 0.8s linear infinite;
+  transition: opacity 0.3s var(--ease);
+}
+.submit.loading::after {
+  opacity: 1;
+}
+@keyframes spin {
+  to {
+    rotate: 360deg;
+  }
+}
