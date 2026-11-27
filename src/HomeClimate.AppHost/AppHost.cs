@@ -9,7 +9,7 @@ var mqttPasswordDefault = new GenerateParameterDefault { MinLength = 22, Special
 var sensorPassword = builder.AddParameter("mqtt-sensor-password", mqttPasswordDefault, secret: true, persist: true);
 var middlewarePassword = builder.AddParameter("mqtt-middleware-password", mqttPasswordDefault, secret: true, persist: true);
 
-var adminUsername = builder.AddParameter("admin-username");
+var adminUsername = builder.AddParameter("admin-username", secret: true);
 var adminPasswordHash = builder.AddParameter("admin-password-hash", secret: true);
 
 var mosquitto = builder.AddContainer("mosquitto", "eclipse-mosquitto", "2.1.4-alpine")

@@ -18,23 +18,25 @@ public class AuthTests(AppHostFixture fixture)
     {
         var client = fixture.CreateClient();
 
-        var response = await client.PostAsJsonAsync("/api/login", new { Username = AppHostFixture.AdminUsername, Password = AppHostFixture.AdminPassword });
+        var response = await AppHostFixture.LoginAsync(client);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains(response.Headers.GetValues("Set-Cookie"), c => c.StartsWith(".AspNetCore.Cookies="));
 
         response = await client.GetAsync("/api/health");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
- 
-    [Fact]
-    public async Task Login_with_wrong_password_is_unauthorized()
+
+    [Theory]
+    [InlineData(AppHostFixture.AdminUsername, "wrong")]
+    [InlineData("someone", AppHostFixture.AdminPassword)]
+    public async Task Login_with_wrong_credentials_is_unauthorized_without_saying_which(string username, string password)
     {
         var response = await fixture.CreateClient()
-            .PostAsJsonAsync("/api/login", new { Username = AppHostFixture.AdminUsername, Password = "wrong" });
+            .PostAsJsonAsync("/api/login", new { Username = username, Password = password });
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
 
-        var login = await response.Content.ReadFromJsonAsync<ProblemResponse>();
-        Assert.Equal("credenciais inválidas", login!.Detail);
+        var problem = await response.Content.ReadFromJsonAsync<ProblemResponse>();
+        Assert.Equal("credenciais inválidas", problem!.Detail);
     }
 
     private record ProblemResponse(string Detail);

@@ -32,13 +32,13 @@ public sealed class AppHostFixture : IAsyncLifetime
     // App.CreateHttpClient pools one handler, so one login's cookie would reach every test
     public HttpClient CreateClient() => new() { BaseAddress = App.GetEndpoint("api", "http") };
 
+    public static Task<HttpResponseMessage> LoginAsync(HttpClient client) =>
+        client.PostAsJsonAsync("/api/login", new { Username = AdminUsername, Password = AdminPassword });
+
     public async Task<HttpClient> CreateLoggedInClientAsync()
     {
         var client = CreateClient();
-
-        var response = await client.PostAsJsonAsync("/api/login", new { Username = AdminUsername, Password = AdminPassword });
-        response.EnsureSuccessStatusCode();
-
+        (await LoginAsync(client)).EnsureSuccessStatusCode();
         return client;
     }
 }
