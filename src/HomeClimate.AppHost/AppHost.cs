@@ -9,6 +9,9 @@ var mqttPasswordDefault = new GenerateParameterDefault { MinLength = 22, Special
 var sensorPassword = builder.AddParameter("mqtt-sensor-password", mqttPasswordDefault, secret: true, persist: true);
 var middlewarePassword = builder.AddParameter("mqtt-middleware-password", mqttPasswordDefault, secret: true, persist: true);
 
+var adminUsername = builder.AddParameter("admin-username");
+var adminPasswordHash = builder.AddParameter("admin-password-hash", secret: true);
+
 var mosquitto = builder.AddContainer("mosquitto", "eclipse-mosquitto", "2.1.4-alpine")
     .WithEndpoint(targetPort: 1883, name: "mqtt", scheme: "tcp")
     .WithBindMount("mosquitto", "/mosquitto/config", isReadOnly: true)
@@ -26,6 +29,8 @@ var api = builder.AddDotnetProject("api", "../HomeClimate.Api/HomeClimate.Api.cs
     .WithEnvironment("Mqtt__Port", mqtt.Property(EndpointProperty.Port))
     .WithEnvironment("Mqtt__Username", "middleware")
     .WithEnvironment("Mqtt__Password", middlewarePassword)
+    .WithEnvironment("Admin__Username", adminUsername)
+    .WithEnvironment("Admin__PasswordHash", adminPasswordHash)
     .WaitFor(mosquitto);
 
 // No WaitFor(api): its health needs DB and broker, and the page must load to show them down

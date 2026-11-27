@@ -8,7 +8,8 @@ public class HealthTests(AppHostFixture fixture)
     [Fact]
     public async Task Health_reports_db_and_broker_healthy()
     {
-        var response = await fixture.App.CreateHttpClient("api").GetAsync("/api/health");
+        var client = await fixture.CreateLoggedInClientAsync();
+        var response = await client.GetAsync("/api/health");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var health = await response.Content.ReadFromJsonAsync<HealthResponse>();
