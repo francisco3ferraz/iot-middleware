@@ -1,5 +1,6 @@
 ﻿using System.Net.Http.Json;
 using Aspire.Hosting;
+using MQTTnet;
 
 namespace HomeClimate.Tests;
 
@@ -39,6 +40,23 @@ public sealed class AppHostFixture : IAsyncLifetime
     {
         var client = CreateClient();
         (await LoginAsync(client)).EnsureSuccessStatusCode();
+        return client;
+    }
+
+    public MqttClientOptionsBuilder BrokerOptions()
+    {
+        var endpoint = App.GetEndpoint("mosquitto", "mqtt");
+        return new MqttClientOptionsBuilder().WithTcpServer(endpoint.Host, endpoint.Port);
+    }
+
+    public async Task<IMqttClient> ConnectMqttAsync(string username, string passwordParameter)
+    {
+        var password = await App.Services.GetRequiredService<DistributedApplicationModel>()
+            .Resources.OfType<ParameterResource>().Single(r => r.Name == passwordParameter)
+            .GetValueAsync(CancellationToken.None);
+        var client = new MqttClientFactory().CreateMqttClient();
+        var result = await client.ConnectAsync(BrokerOptions().WithCredentials(username, password).Build());
+        Assert.Equal(MqttClientConnectResultCode.Success, result.ResultCode);
         return client;
     }
 }

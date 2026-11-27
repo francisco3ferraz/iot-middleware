@@ -11,7 +11,7 @@ public class BrokerTests(AppHostFixture fixture)
     {
         using var client = new MqttClientFactory().CreateMqttClient();
 
-        var result = await client.ConnectAsync(BrokerOptions().Build());
+        var result = await client.ConnectAsync(fixture.BrokerOptions().Build());
 
         Assert.Equal(MqttClientConnectResultCode.NotAuthorized, result.ResultCode);
     }
@@ -19,16 +19,17 @@ public class BrokerTests(AppHostFixture fixture)
     [Fact]
     public async Task Middleware_receives_what_sensor_publishes()
     {
-        using var middleware = await ConnectAsync("middleware", "mqtt-middleware-password");
+        using var middleware = await fixture.ConnectMqttAsync("middleware", "mqtt-middleware-password");
         var received = new TaskCompletionSource<string>();
         middleware.ApplicationMessageReceivedAsync += e =>
         {
             received.TrySetResult(e.ApplicationMessage.ConvertPayloadToString());
             return Task.CompletedTask;
         };
-        await middleware.SubscribeAsync("home/sensors/#");
+        // Other tests leave retained messages under home/sensors/#
+        await middleware.SubscribeAsync("home/sensors/test/meta");
 
-        using var sensor = await ConnectAsync("sensor", "mqtt-sensor-password");
+        using var sensor = await fixture.ConnectMqttAsync("sensor", "mqtt-sensor-password");
         await sensor.PublishStringAsync("home/sensors/test/meta", "hello");
 
         Assert.Equal("hello", await received.Task.WaitAsync(TimeSpan.FromSeconds(10)));
@@ -37,15 +38,15 @@ public class BrokerTests(AppHostFixture fixture)
     [Fact]
     public async Task Middleware_cannot_publish_on_sensor_topics()
     {
-        using var middleware = await ConnectAsync("middleware", "mqtt-middleware-password");
+        using var middleware = await fixture.ConnectMqttAsync("middleware", "mqtt-middleware-password");
         var received = new TaskCompletionSource<string>();
         middleware.ApplicationMessageReceivedAsync += e =>
         {
             received.TrySetResult(e.ApplicationMessage.ConvertPayloadToString());
             return Task.CompletedTask;
         };
-        await middleware.SubscribeAsync("home/sensors/#");
-        using var sensor = await ConnectAsync("sensor", "mqtt-sensor-password");
+        await middleware.SubscribeAsync("home/sensors/acl/meta");
+        using var sensor = await fixture.ConnectMqttAsync("sensor", "mqtt-sensor-password");
 
         // QoS 1 waits for the broker to handle each publish, so the sensor's
         // message can only arrive first if the middleware's was dropped
@@ -55,20 +56,4 @@ public class BrokerTests(AppHostFixture fixture)
         Assert.Equal("from sensor", await received.Task.WaitAsync(TimeSpan.FromSeconds(10)));
     }
 
-    private MqttClientOptionsBuilder BrokerOptions()
-    {
-        var endpoint = fixture.App.GetEndpoint("mosquitto", "mqtt");
-        return new MqttClientOptionsBuilder().WithTcpServer(endpoint.Host, endpoint.Port);
-    }
-
-    private async Task<IMqttClient> ConnectAsync(string username, string passwordParameter)
-    {
-        var password = await fixture.App.Services.GetRequiredService<DistributedApplicationModel>()
-            .Resources.OfType<ParameterResource>().Single(r => r.Name == passwordParameter)
-            .GetValueAsync(CancellationToken.None);
-        var client = new MqttClientFactory().CreateMqttClient();
-        var result = await client.ConnectAsync(BrokerOptions().WithCredentials(username, password).Build());
-        Assert.Equal(MqttClientConnectResultCode.Success, result.ResultCode);
-        return client;
-    }
 }
