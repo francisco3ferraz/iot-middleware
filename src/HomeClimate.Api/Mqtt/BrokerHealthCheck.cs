@@ -1,7 +1,7 @@
-﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using MQTTnet;
 
-namespace HomeClimate.Api;
+namespace HomeClimate.Api.Mqtt;
 
 public class BrokerHealthCheck(MqttSettings settings) : IHealthCheck
 {

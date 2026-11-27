@@ -1,9 +1,7 @@
-using System.Security.Claims;
-using HomeClimate.Api;
+using HomeClimate.Api.Auth;
+using HomeClimate.Api.Health;
+using HomeClimate.Api.Mqtt;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -37,21 +35,7 @@ var app = builder.Build();
 app.MapDefaultEndpoints();
 
 var api = app.MapGroup("/api").RequireAuthorization();
-api.MapGet("/health", async (HealthCheckService health, CancellationToken ct) =>
-{
-    var report = await health.CheckHealthAsync(check => check.Tags.Contains("api"), ct);
-    return new { Checks = report.Entries.ToDictionary(e => e.Key, e => e.Value.Status.ToString()) };
-});
-api.MapPost("/login", Results<ProblemHttpResult, SignInHttpResult> (LoginRequest request, AdminSettings admin) =>
-{
-    var passwordCheck = new PasswordHasher<string>().VerifyHashedPassword(request.Username, admin.PasswordHash, request.Password);
-    if (request.Username != admin.Username || passwordCheck == PasswordVerificationResult.Failed)
-    {
-        return TypedResults.Problem("credenciais inválidas", statusCode: 401);
-    }
-
-    return TypedResults.SignIn(new ClaimsPrincipal(new ClaimsIdentity(
-        [new Claim(ClaimTypes.Name, admin.Username)], CookieAuthenticationDefaults.AuthenticationScheme)));
-}).AllowAnonymous();
+api.MapHealthEndpoints();
+api.MapAuthEndpoints();
 
 app.Run();
