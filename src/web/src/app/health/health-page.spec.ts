@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { App } from './app';
+import { HealthPage } from './health-page';
 
-describe('App', () => {
+describe('HealthPage', () => {
   let http: HttpTestingController;
 
   beforeEach(() => {
@@ -16,7 +16,7 @@ describe('App', () => {
   async function renderWith(
     respond: (request: ReturnType<HttpTestingController['expectOne']>) => void,
   ) {
-    const fixture = TestBed.createComponent(App);
+    const fixture = TestBed.createComponent(HealthPage);
     TestBed.tick(); // whenStable would wait on the pending request forever
     respond(http.expectOne('/api/health'));
     await fixture.whenStable();
