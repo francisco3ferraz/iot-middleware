@@ -8,12 +8,8 @@ public class BrokerHealthCheck(MqttSettings settings) : IHealthCheck
     public async Task<HealthCheckResult> CheckHealthAsync(
         HealthCheckContext context, CancellationToken cancellationToken)
     {
-        var options = new MqttClientOptionsBuilder()
-            .WithTcpServer(settings.Host, settings.Port)
-            .WithCredentials(settings.Username, settings.Password)
-            .Build();
         using var client = new MqttClientFactory().CreateMqttClient();
-        var result = await client.ConnectAsync(options, cancellationToken);
+        var result = await client.ConnectAsync(settings.ClientOptions(), cancellationToken);
         if (result.ResultCode != MqttClientConnectResultCode.Success)
             return HealthCheckResult.Unhealthy($"Broker refused connect: {result.ResultCode}");
 
