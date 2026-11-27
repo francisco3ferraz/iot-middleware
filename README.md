@@ -17,13 +17,21 @@ npm ci
 cd ../..
 ```
 
+Set the admin login once. The script prints the password's hash, and `user-secrets` stores the username and hash:
+
+```powershell
+dotnet run tools/hash-password.cs -- <password>
+dotnet user-secrets set "Parameters:admin-username" "<username>" --project src/HomeClimate.AppHost
+dotnet user-secrets set "Parameters:admin-password-hash" "<hash>" --project src/HomeClimate.AppHost
+```
+
 ## Run
 
 ```powershell
 dotnet aspire run
 ```
 
-Open the dashboard link it prints, then open `web`. The page shows "API ok, DB ok, broker ok".
+Open the dashboard link it prints, then open `web`. Log in with your username and password. The page shows "API ok, DB ok, broker ok".
 
 ## Build
 
@@ -59,9 +67,10 @@ npx ng test --watch=false
 | `src/HomeClimate.AppHost` | Aspire AppHost. Declares every resource. |
 | `src/HomeClimate.AppHost/mosquitto` | Broker config, ACL and the entrypoint that hashes passwords at start. |
 | `src/HomeClimate.ServiceDefaults` | Shared telemetry, health checks and service discovery. |
-| `src/HomeClimate.Api` | API: health endpoint, later MQTT ingest, alerts and SSE. |
+| `src/HomeClimate.Api` | API: admin cookie login and health endpoint, later MQTT ingest, alerts and SSE. |
 | `src/HomeClimate.Simulator` | Stands in for real sensors. |
 | `src/web` | Angular dashboard. |
 | `tests/HomeClimate.Tests` | Aspire end-to-end tests. |
+| `tools` | `hash-password.cs`, a one-file script that hashes the admin password. |
 
-MQTT passwords are Aspire secret parameters. They are generated on first run and kept in the AppHost's user secrets.
+MQTT passwords are Aspire secret parameters. They are generated on first run and kept in the AppHost's user secrets. The admin username and password hash are secret parameters too, but you set them yourself, as shown in Setup.
